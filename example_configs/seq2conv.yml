@@ -1,0 +1,41 @@
+model: ConvSeq2Seq
+model_params:
+  embedding.dim: 64
+  encoder.class: seq2seq.encoders.UnidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params:
+        num_units: 64
+      dropout_input_keep_prob: 1
+      dropout_output_keep_prob: 1
+      num_layers: 1
+  decoder.class: seq2seq.decoders.ConvDecoder
+  decoder.params:
+    max_input_seq_length: 50
+    input_embeding_dim: 64
+    output_embeding_dim: 64
+  optimizer.name: SGD
+  optimizer.learning_rate: 0.5
+  optimizer.lr_decay_type: exponential_decay
+  optimizer.lr_decay_steps: 1000
+  optimizer.lr_decay_rate: 0.99
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: /home/chunfengh/nmt_data/toy_copy/train/vocab.sources.txt
+  vocab_target: /home/chunfengh/nmt_data/toy_copy/train/vocab.targets.txt
+input_pipeline_train:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_copy/train/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_copy/train/targets.txt"]
+    target_delimiter: ' '
+input_pipeline_dev:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_copy/dev/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_copy/dev/targets.txt"]
+    target_delimiter: ' '

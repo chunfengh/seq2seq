@@ -1,0 +1,46 @@
+model: BasicSeq2Seq
+model_params:
+  bridge.class: seq2seq.models.bridges.InitialStateBridge
+  embedding.dim: 64
+  encoder.class: seq2seq.encoders.UnidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params:
+        num_units: 64
+      dropout_input_keep_prob: 1
+      dropout_output_keep_prob: 1
+      num_layers: 1
+  decoder.class: seq2seq.decoders.BasicDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: LSTMCell
+      cell_params:
+        num_units: 64
+      dropout_input_keep_prob: 1
+      dropout_output_keep_prob: 1
+      num_layers: 1
+  optimizer.name: SGD
+  optimizer.learning_rate: 0.2
+  optimizer.lr_decay_type: exponential_decay
+  optimizer.lr_decay_steps: 1000
+  optimizer.lr_decay_rate: 0.99
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: /home/chunfengh/nmt_data/toy_reverse/train/vocab.sources.txt
+  vocab_target: /home/chunfengh/nmt_data/toy_reverse/train/vocab.targets.txt
+input_pipeline_train:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_reverse/train/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_reverse/train/targets.txt"]
+    target_delimiter: ' '
+input_pipeline_dev:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_reverse/dev/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_reverse/dev/targets.txt"]
+    target_delimiter: ' '

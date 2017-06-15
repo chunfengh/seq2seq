@@ -1,0 +1,49 @@
+model: AttentionSeq2Seq
+model_params:
+  attention.class: seq2seq.decoders.attention.AttentionLayerDot
+  attention.params:
+    num_units: 128
+  bridge.class: seq2seq.models.bridges.ZeroBridge
+  embedding.dim: 128
+  encoder.class: seq2seq.encoders.BidirectionalRNNEncoder
+  encoder.params:
+    rnn_cell:
+      cell_class: GRUCell
+      cell_params:
+        num_units: 128
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  decoder.class: seq2seq.decoders.AttentionDecoder
+  decoder.params:
+    rnn_cell:
+      cell_class: GRUCell
+      cell_params:
+        num_units: 128
+      dropout_input_keep_prob: 0.8
+      dropout_output_keep_prob: 1.0
+      num_layers: 1
+  optimizer.name: Adam
+  optimizer.params:
+    epsilon: 0.0000008
+  optimizer.learning_rate: 0.0001
+  source.max_seq_len: 50
+  source.reverse: false
+  target.max_seq_len: 50
+  vocab_source: /home/chunfengh/medical_seq2seq/vocab.source.txt
+  vocab_target: /home/chunfengh/medical_seq2seq/vocab.target.txt
+input_pipeline_train:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/medical_seq2seq/train.source.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/medical_seq2seq/train.target.txt"]
+    target_delimiter: ' '
+input_pipeline_dev:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/medical_seq2seq/dev.source.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/medical_seq2seq/dev.target.txt"]
+    target_delimiter: ' '
+
