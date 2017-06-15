@@ -149,12 +149,16 @@ class InitialStateBridge(Bridge):
     bridge_input = nest.map_structure(
         lambda x: tf.reshape(x, [self.batch_size, _total_tensor_depth(x)]),
         self._bridge_input)
+    print ("create bridge")
+    print (bridge_input)
     bridge_input_flat = nest.flatten([bridge_input])
+    print (bridge_input_flat)
     bridge_input_concat = tf.concat(bridge_input_flat, 1)
-
+    print (bridge_input_concat)
     state_size_splits = nest.flatten(self.decoder_state_size)
     total_decoder_state_size = sum(state_size_splits)
 
+    bridge_input_concat = tf.Print(bridge_input_concat, [tf.shape(bridge_input_concat), bridge_input_concat], message="bridge _create:")
     # Pass bridge inputs through a fully connected layer layer
     initial_state_flat = tf.contrib.layers.fully_connected(
         inputs=bridge_input_concat,

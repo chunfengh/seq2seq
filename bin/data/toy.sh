@@ -32,23 +32,23 @@ mkdir -p $OUTPUT_DIR
 # Write train, dev and test data
 ${BASE_DIR}/bin/tools/generate_toy_data.py  \
   --type ${DATA_TYPE} \
-  --num_examples 10000 \
-  --vocab_size 20 \
-  --max_len 20 \
+  --num_examples 100000 \
+  --vocab_size 100 \
+  --max_len 45 \
   --output_dir ${OUTPUT_DIR_TRAIN}
 
 ${BASE_DIR}/bin/tools/generate_toy_data.py  \
   --type ${DATA_TYPE} \
-  --num_examples 1000 \
-  --vocab_size 20 \
-  --max_len 20 \
+  --num_examples 10000 \
+  --vocab_size 100 \
+  --max_len 45 \
   --output_dir ${OUTPUT_DIR_DEV}
 
 ${BASE_DIR}/bin/tools/generate_toy_data.py  \
   --type ${DATA_TYPE} \
-  --num_examples 1000 \
-  --vocab_size 20 \
-  --max_len 20 \
+  --num_examples 10000 \
+  --vocab_size 100 \
+  --max_len 45 \
   --output_dir ${OUTPUT_DIR_TEST}
 
 # Create Vocabulary

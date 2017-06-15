@@ -52,8 +52,23 @@ PARSER.add_argument(
 ARGS = PARSER.parse_args()
 
 VOCABULARY = list([str(x) for x in range(ARGS.vocab_size - 1)])
-VOCABULARY += ["笑"]
+# VOCABULARY += ["笑"]
 
+
+def get_target_token(source_tokens):
+  num_odd = 0
+  num_even = 0
+  for token in source_tokens:
+    if int(token) % 2 == 0:
+      num_even += 1
+    else:
+      num_odd += 1
+  if num_even == num_odd:
+    return "EQUAL"
+  elif num_even > num_odd:
+    return "EVEN"
+  else:
+    return "ODD"
 
 def make_copy(num_examples, min_len, max_len):
   """
@@ -68,13 +83,24 @@ def make_copy(num_examples, min_len, max_len):
   Returns:
     An iterator of (source, target) string tuples.
   """
+
+  ### Backup for old copy data generation
+  # for _ in range(num_examples):
+  #   turn_length = np.random.choice(np.arange(min_len, max_len + 1))
+  #   source_tokens = np.random.choice(
+  #       list(VOCABULARY), size=turn_length, replace=True)
+  #   target_tokens = source_tokens
+  #   yield " ".join(source_tokens), " ".join(target_tokens)
+
+  # 
   for _ in range(num_examples):
     turn_length = np.random.choice(np.arange(min_len, max_len + 1))
     source_tokens = np.random.choice(
         list(VOCABULARY), size=turn_length, replace=True)
-    target_tokens = source_tokens
-    yield " ".join(source_tokens), " ".join(target_tokens)
-
+    target_token = get_target_token(source_tokens)
+    yield " ".join(source_tokens), target_token
+    
+   
 
 def make_reverse(num_examples, min_len, max_len):
   """

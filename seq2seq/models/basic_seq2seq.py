@@ -99,6 +99,9 @@ class BasicSeq2Seq(Seq2SeqModel):
         start_tokens=tf.fill([batch_size], target_start_id),
         end_token=self.target_vocab_info.special_vocab.SEQUENCE_END)
     decoder_initial_state = bridge()
+    print (decoder_initial_state)
+    print ('decoder_initial_state')
+    #decoder_initial_state = tf.Print(decoder_initial_state, [tf.shape(decoder_initial_state), decoder_initial_state], message="decoder_initial_state: ")
     return decoder(decoder_initial_state, helper_infer)
 
   @templatemethod("encode")

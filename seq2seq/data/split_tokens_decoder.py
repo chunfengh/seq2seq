@@ -40,12 +40,14 @@ class SplitTokensDecoder(data_decoder.DataDecoder):
                tokens_feature_name="tokens",
                length_feature_name="length",
                prepend_token=None,
-               append_token=None):
+               append_token=None,
+               append_to_fixed_len=None):
     self.delimiter = delimiter
     self.tokens_feature_name = tokens_feature_name
     self.length_feature_name = length_feature_name
     self.prepend_token = prepend_token
     self.append_token = append_token
+    self.append_to_fixed_len = append_to_fixed_len
 
   def decode(self, data, items):
     decoded_items = {}
@@ -57,9 +59,18 @@ class SplitTokensDecoder(data_decoder.DataDecoder):
     if self.prepend_token is not None:
       tokens = tf.concat([[self.prepend_token], tokens], 0)
 
+    print ("input decoder")
+    print (self.append_to_fixed_len)
+    print (self.append_token)
     # Optionally append a special token
     if self.append_token is not None:
       tokens = tf.concat([tokens, [self.append_token]], 0)
+      if self.append_to_fixed_len is not None:
+        num_missing = self.append_to_fixed_len - tf.size(tokens)
+        print (num_missing)
+        tokens = tf.cond(num_missing > 0,
+                         lambda: tf.concat([tokens, tf.fill([num_missing], self.append_token)], 0),
+                         lambda: tf.slice(tokens, [0], [self.append_to_fixed_len]))
 
     decoded_items[self.length_feature_name] = tf.size(tokens)
     decoded_items[self.tokens_feature_name] = tokens

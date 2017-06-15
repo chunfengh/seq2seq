@@ -34,11 +34,15 @@ class BasicDecoder(RNNDecoder):
 
   def compute_output(self, cell_output):
     """Computes the decoder outputs."""
+    cell_output = tf.Print(cell_output, [tf.shape(cell_output), cell_output], message="compute_output: ")
     return tf.contrib.layers.fully_connected(
         inputs=cell_output, num_outputs=self.vocab_size, activation_fn=None)
 
   @property
   def output_size(self):
+    print (self.cell.output_size)
+    print (self.vocab_size)
+    print (tf.TensorShape([]))
     return DecoderOutput(
         logits=self.vocab_size,
         predicted_ids=tf.TensorShape([]),
@@ -54,6 +58,7 @@ class BasicDecoder(RNNDecoder):
     return finished, first_inputs, self.initial_state
 
   def step(self, time_, inputs, state, name=None):
+    inputs = tf.Print(inputs, [inputs, tf.shape(inputs)], message="Inputs Tensor: ")
     cell_output, cell_state = self.cell(inputs, state)
     logits = self.compute_output(cell_output)
     sample_ids = self.helper.sample(
@@ -62,4 +67,11 @@ class BasicDecoder(RNNDecoder):
         logits=logits, predicted_ids=sample_ids, cell_output=cell_output)
     finished, next_inputs, next_state = self.helper.next_inputs(
         time=time_, outputs=outputs, state=cell_state, sample_ids=sample_ids)
+    finished = tf.Print(finished, [tf.shape(finished), tf.shape(outputs.predicted_ids), finished, outputs.predicted_ids], message="Finished Tensor:")
+    next_inputs = tf.Print(next_inputs, [next_inputs, tf.shape(next_inputs)], message="next_inputs Tensor:")
+    # next_state = tf.Print(next_state, [next_state, tf.shape(next_state)], message="next_state Tensor:")
+
+    print (outputs)
+    print (next_state)
+
     return (outputs, next_state, next_inputs, finished)

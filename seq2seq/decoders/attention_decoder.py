@@ -187,3 +187,4 @@ class AttentionDecoder(RNNDecoder):
         time=time_, outputs=outputs, state=cell_state, sample_ids=sample_ids)
 
     return (outputs, next_state, next_inputs, finished)
+

@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 # Copyright 2017 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +49,7 @@ tf.flags.DEFINE_string("input_pipeline", None,
                        """Defines how input data should be loaded.
                        A YAML string.""")
 
-tf.flags.DEFINE_string("model_dir", None, "directory to load model from")
+tf.flags.DEFINE_string("model_dir", "/home/chunfengh/nmt_data/toy_reverse/model/", "directory to load model from")
 tf.flags.DEFINE_string("checkpoint_path", None,
                        """Full path to the checkpoint to be loaded. If None,
                        the latest checkpoint in the model dir is used.""")
@@ -70,12 +71,12 @@ def main(_argv):
   if isinstance(FLAGS.tasks, string_types):
     FLAGS.tasks = _maybe_load_yaml(FLAGS.tasks)
 
-  if isinstance(FLAGS.input_pipeline, string_types):
-    FLAGS.input_pipeline = _maybe_load_yaml(FLAGS.input_pipeline)
+  # if isinstance(FLAGS.input_pipeline, string_types):
+  #   FLAGS.input_pipeline = _maybe_load_yaml(FLAGS.input_pipeline)
 
-  input_pipeline_infer = input_pipeline.make_input_pipeline_from_def(
-      FLAGS.input_pipeline, mode=tf.contrib.learn.ModeKeys.INFER,
-      shuffle=False, num_epochs=1)
+  # input_pipeline_infer = input_pipeline.make_input_pipeline_from_def(
+  #     FLAGS.input_pipeline, mode=tf.contrib.learn.ModeKeys.INFER,
+  #     shuffle=False, num_epochs=1)
 
   # Load saved training options
   train_options = training_utils.TrainOptions.load(FLAGS.model_dir)
@@ -92,6 +93,7 @@ def main(_argv):
 
   # Load inference tasks
   hooks = []
+  print (FLAGS.tasks)
   for tdict in FLAGS.tasks:
     if not "params" in tdict:
       tdict["params"] = {}
@@ -100,10 +102,18 @@ def main(_argv):
     hooks.append(task)
 
   # Create the graph used for inference
-  predictions, _, _ = create_inference_graph(
-      model=model,
-      input_pipeline=input_pipeline_infer,
-      batch_size=FLAGS.batch_size)
+  input_data = tf.placeholder(tf.string)
+  tokens = tf.string_split(input_data).values
+  length = tf.size(tokens)
+  # features = {'source_tokens': tf.expand_dims(tokens, 0),
+  #             'source_len':    tf.expand_dims(length, 0)}
+  features = {'source_tokens': tf.stack([tokens, tokens]),
+              'source_len':    tf.stack([length, length])}
+  predictions, _, _ = model(features=features, labels=None, params=None)
+  # predictions, _, _ = create_inference_graph(
+  #     model=model,
+  #     input_pipeline=input_pipeline_infer,
+  #     batch_size=FLAGS.batch_size)
 
   saver = tf.train.Saver()
   checkpoint_path = FLAGS.checkpoint_path
@@ -121,8 +131,12 @@ def main(_argv):
       hooks=hooks) as sess:
 
     # Run until the inputs are exhausted
-    while not sess.should_stop():
-      sess.run([])
+    # while not sess.should_stop():
+    #   sess.run([])
+    output = sess.run([predictions[u'predicted_tokens']], feed_dict={input_data: [u'15 11 5 15 0 2 2 15 15 0 7 10 4 4 12 12 16 SEQUENCE_END']})
+    print (output[0][0])
+    print (u' '.join(output[0][0][:-1]))
+
 
 if __name__ == "__main__":
   tf.logging.set_verbosity(tf.logging.INFO)

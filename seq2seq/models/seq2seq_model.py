@@ -69,12 +69,14 @@ class Seq2SeqModel(ModelBase):
   def _clip_gradients(self, grads_and_vars):
     """In addition to standard gradient clipping, also clips embedding
     gradients to a specified value."""
-    grads_and_vars = super(Seq2SeqModel, self)._clip_gradients(grads_and_vars)
 
+    grads_and_vars = super(Seq2SeqModel, self)._clip_gradients(grads_and_vars)
     clipped_gradients = []
     variables = []
     for gradient, variable in grads_and_vars:
-      if "embedding" in variable.name:
+      print (gradient)
+      print (variable)
+      if "embedding" in variable.name and gradient is not None:
         tmp = tf.clip_by_norm(
             gradient.values, self.params["optimizer.clip_embed_gradients"])
         gradient = tf.IndexedSlices(tmp, gradient.indices, gradient.dense_shape)
@@ -82,7 +84,8 @@ class Seq2SeqModel(ModelBase):
       variables.append(variable)
     return list(zip(clipped_gradients, variables))
 
-  def _create_predictions(self, decoder_output, features, labels, losses=None):
+  @templatemethod("create_predictions")
+  def create_predictions(self, decoder_output, features, labels, losses=None):
     """Creates the dictionary of predictions that is returned by the model.
     """
     predictions = {}
@@ -181,6 +184,24 @@ class Seq2SeqModel(ModelBase):
             self.params["inference.beam_search.choose_successors_fn"]))
     return BeamSearchDecoder(decoder=decoder, config=config)
 
+  def _index_batch_to_2d_tensor(self, batch, batch_size, num_labels):
+    print (batch_size)
+    print ("index_batch_to_2d")
+    batch = tf.to_int32(batch)
+    batch = tf.reshape(batch, [batch_size, 1])
+    print (batch)
+    sparse_labels = tf.reshape(batch, [batch_size, 1])
+    indices = tf.reshape(tf.range(0, batch_size, 1), [batch_size, 1])
+    print (indices)
+    print (sparse_labels)
+    concatenated = tf.concat([indices, sparse_labels], 1)
+    print (concatenated)
+    concat = tf.concat([[batch_size], [num_labels]], 0)
+    print (concat)
+    output_shape = tf.reshape(concat, [2])
+    sparse_to_dense = tf.sparse_to_dense(concatenated, output_shape, 1.0, 0.0)
+    return tf.reshape(sparse_to_dense, [batch_size, num_labels])
+
   @property
   def use_beam_search(self):
     """Returns true iff the model should perform beam search.
@@ -251,6 +272,12 @@ class Seq2SeqModel(ModelBase):
     # Look up the target ids in the vocabulary
     labels["target_ids"] = target_vocab_to_id.lookup(labels["target_tokens"])
 
+    labels["target_class"] = target_vocab_to_id.lookup(labels["target_tokens"][:, 1])
+    labels["target_onehot"] = self._index_batch_to_2d_tensor(
+        labels["target_class"],
+        tf.shape(labels["target_tokens"])[0] ,
+        self.target_vocab_info.total_size)
+
     labels["target_len"] = tf.to_int32(labels["target_len"])
     tf.summary.histogram("target_len", tf.to_float(labels["target_len"]))
 
@@ -271,6 +298,7 @@ class Seq2SeqModel(ModelBase):
 
     return features, labels
 
+  @templatemethod("compute_loss")
   def compute_loss(self, decoder_output, _features, labels):
     """Computes the loss for this model.
 
@@ -293,12 +321,15 @@ class Seq2SeqModel(ModelBase):
   def _build(self, features, labels, params):
     # Pre-process features and labels
     features, labels = self._preprocess(features, labels)
-
+    # features = tf.Print(features, [tf.shape(features), features], message="input features: ")
     encoder_output = self.encode(features, labels)
-    decoder_output, _, = self.decode(encoder_output, features, labels)
-
+    decoder_output, _ = self.decode(encoder_output, features, labels)
+    print ("build seq2seq model")
+    print (encoder_output)
+    print (decoder_output)
+    print ("build done")
     if self.mode == tf.contrib.learn.ModeKeys.INFER:
-      predictions = self._create_predictions(
+      predictions = self.create_predictions(
           decoder_output=decoder_output, features=features, labels=labels)
       loss = None
       train_op = None
@@ -309,7 +340,7 @@ class Seq2SeqModel(ModelBase):
       if self.mode == tf.contrib.learn.ModeKeys.TRAIN:
         train_op = self._build_train_op(loss)
 
-      predictions = self._create_predictions(
+      predictions = self.create_predictions(
           decoder_output=decoder_output,
           features=features,
           labels=labels,

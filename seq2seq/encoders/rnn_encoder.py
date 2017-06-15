@@ -85,11 +85,13 @@ class UnidirectionalRNNEncoder(Encoder):
     }
 
   def encode(self, inputs, sequence_length, **kwargs):
+    if kwargs is not None:
+      for key, value in kwargs.iteritems():
+        print ("%s == %s" % (key, value))
     scope = tf.get_variable_scope()
     scope.set_initializer(tf.random_uniform_initializer(
         -self.params["init_scale"],
         self.params["init_scale"]))
-
     cell = training_utils.get_rnn_cell(**self.params["rnn_cell"])
     outputs, state = tf.nn.dynamic_rnn(
         cell=cell,

@@ -30,3 +30,19 @@ model_params:
   source.max_seq_len: 50
   source.reverse: false
   target.max_seq_len: 50
+  vocab_source: /home/chunfengh/nmt_data/toy_reverse/train/vocab.sources.txt
+  vocab_target: /home/chunfengh/nmt_data/toy_reverse/train/vocab.targets.txt
+input_pipeline_train:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_reverse/train/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_reverse/train/targets.txt"]
+    target_delimiter: ' '
+input_pipeline_dev:
+  class: ParallelTextInputPipeline
+  params:
+    source_files: ["/home/chunfengh/nmt_data/toy_reverse/dev/sources.txt"]
+    source_delimiter: ' '
+    target_files: ["/home/chunfengh/nmt_data/toy_reverse/dev/targets.txt"]
+    target_delimiter: ' '
