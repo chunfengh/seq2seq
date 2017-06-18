@@ -151,6 +151,7 @@ class DecodeText(InferenceTask):
 
   def after_run(self, _run_context, run_values):
     fetches_batch = run_values.results
+    print (fetches_batch)
     for fetches in unbatch_dict(fetches_batch):
       # Convert to unicode
       fetches["predicted_tokens"] = np.char.decode(

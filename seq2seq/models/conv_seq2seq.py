@@ -83,11 +83,15 @@ class ConvSeq2Seq(Seq2SeqModel):
 
     # If we predict the ids also map them back into the vocab and process them
     if "predicted_ids" in predictions.keys():
+      predicted_tk_id = predictions["predicted_ids"]
       vocab_tables = graph_utils.get_dict_from_collection("vocab_tables")
       target_id_to_vocab = vocab_tables["target_id_to_vocab"]
       predicted_tokens = target_id_to_vocab.lookup(
-          tf.to_int64(predictions["predicted_ids"]))
+          tf.to_int64(predicted_tk_id))
       # Raw predicted tokens
+      # Force to reshape to [batch_size, 1, 1] so that it has same shape as regular seq2seq,
+      # and all post process code can be reused.
+      predicted_tokens = tf.reshape(predicted_tokens, [tf.shape(predicted_tokens)[0], 1, 1])
       predictions["predicted_tokens"] = predicted_tokens
 
     return predictions
@@ -103,9 +107,13 @@ class ConvSeq2Seq(Seq2SeqModel):
     # Calculate loss per example-timestep of shape [B, T]
     print (decoder_output)
     print (labels)
-    losses = tf.nn.softmax_cross_entropy_with_logits(
-        logits=decoder_output.logits,
-        labels=labels["target_onehot"])
+    logits = decoder_output.logits
+    # logits = tf.Print(logits, [tf.shape(logits), logits], message="compute_loss, logits:", summarize=18)
+    ll = labels["target_class"]
+    # ll = tf.Print(ll, [tf.shape(ll), ll], message="compute_loss, target_class:", summarize=18)
+    losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits,
+        labels=ll)
     print (decoder_output.logits)
     print (labels["target_onehot"])
     print (losses)
@@ -130,6 +138,11 @@ class ConvSeq2Seq(Seq2SeqModel):
 
   def _decode_infer(self, decoder, encoder_output, features, labels):
     """Runs decoding in inference mode"""
+    decoder_inputs = tf.Print(encoder_output.outputs,
+                               [tf.shape(features["source_ids"]),
+                                tf.shape(features["source_tokens"]),
+                                features["source_ids"], features["source_tokens"]],
+                               message="encoder input: ", summarize=1000)
     return decoder(decoder_inputs, None)
 
   @templatemethod("encode")

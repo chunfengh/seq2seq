@@ -121,7 +121,7 @@ class ConvDecoder(Decoder, GraphModule, Configurable):
 
     def _pad_fn(inputs, max_input_seq_len):
       target_pad = max_input_seq_len - tf.shape(inputs)[1]
-      inputs = tf.Print(inputs, [tf.shape(inputs), tf.transpose(inputs, [0, 2, 1])], message="input before pad: ", summarize = 1000)
+      #inputs = tf.Print(inputs, [tf.shape(inputs), tf.transpose(inputs, [0, 2, 1])], message="input before pad: ", summarize = 1000)
       padded_inputs = tf.pad(inputs, [[0, 0], [0, target_pad], [0, 0]], "CONSTANT")
       return padded_inputs
       
@@ -144,14 +144,19 @@ class ConvDecoder(Decoder, GraphModule, Configurable):
     print (batch_size)
     print (input_embeding_dim)
     pad_inputs = tf.reshape(pad_inputs, [batch_size, max_input_seq_len, input_embeding_dim])
-    pad_inputs = tf.transpose(pad_inputs, [0, 2, 1])
-    # FC layers in sequence.
-    y = tf.contrib.layers.stack(pad_inputs,
+    # FC layers in sequence to reduce embeding dim.
+    # pad_inputs = tf.Print(pad_inputs, [tf.shape(pad_inputs), pad_inputs], message="before fc:")
+    # Flat to 2d for FC layers
+    x = tf.contrib.layers.flatten(pad_inputs)
+    # x = tf.Print(x, [tf.shape(x), x], message="before fc:")
+    y = tf.contrib.layers.stack(x,
                                 tf.contrib.layers.fully_connected,
-                                [128, 64, 32, self.vocab_size],
+                                [256, 128, 32],
                                 scope='Decoder/FC')
-    y = tf.reshape(y, [batch_size, input_embeding_dim * self.vocab_size])
-    logits = tf.contrib.layers.fully_connected(inputs=y, num_outputs=self.vocab_size, activation_fn=None)
+    # y = tf.Print(y, [tf.shape(y), y], message="after fc");
+    logits = tf.contrib.layers.fully_connected(inputs=y, num_outputs=self.vocab_size,
+                                               activation_fn=None, scope='logits')
+    # logits = tf.Print(logits, [tf.shape(logits), logits], message="logits: ", summarize=18)
     # calculate logics.
     predictions = math_ops.cast(
         math_ops.argmax(logits, axis=-1), dtypes.int32)

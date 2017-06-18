@@ -16,7 +16,7 @@ model_params:
     input_embeding_dim: 64
     output_embeding_dim: 64
   optimizer.name: SGD
-  optimizer.learning_rate: 0.5
+  optimizer.learning_rate: 0.02
   optimizer.lr_decay_type: exponential_decay
   optimizer.lr_decay_steps: 1000
   optimizer.lr_decay_rate: 0.99
