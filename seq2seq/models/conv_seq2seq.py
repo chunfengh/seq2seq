@@ -91,7 +91,7 @@ class ConvSeq2Seq(Seq2SeqModel):
       # Raw predicted tokens
       # Force to reshape to [batch_size, 1, 1] so that it has same shape as regular seq2seq,
       # and all post process code can be reused.
-      predicted_tokens = tf.reshape(predicted_tokens, [tf.shape(predicted_tokens)[0], 1, 1])
+      #predicted_tokens = tf.reshape(predicted_tokens, [tf.shape(predicted_tokens)[0], 1, 1])
       predictions["predicted_tokens"] = predicted_tokens
 
     return predictions

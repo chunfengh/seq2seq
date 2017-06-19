@@ -59,7 +59,7 @@ tf.flags.DEFINE_string("input_pipeline", None,
                        A YAML string.""")
 
 tf.flags.DEFINE_string("model_dir",
-                       "/home/chunfengh/nmt_data/toy_copy/model_conv",
+                       "/home/chunfengh/nmt_data/toy_copy/model_conv_2",
                        "directory to load model from")
 tf.flags.DEFINE_string("checkpoint_path", None,
                        """Full path to the checkpoint to be loaded. If None,
@@ -122,7 +122,8 @@ class Seq2SeqInferer:
   def Infer(self, input_string):
     num_input_tokens = input_string.count(' ')
     data = unicode(' ').join(
-        [input_string.encode('utf-8'), u' SEQUENCE_END' * (50 - num_input_tokens)]).encode('utf-8')
+        [input_string.encode('utf-8'), u' SEQUENCE_END']).encode('utf-8')
+        # [input_string.encode('utf-8'), u' SEQUENCE_END' * (50 - num_input_tokens)]).encode('utf-8')
     output = self.sess.run([self.predictions[u'predicted_tokens']],
                            feed_dict={self.input_data: [data]})
     str_list = output[0][0][0]

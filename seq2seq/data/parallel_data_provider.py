@@ -54,7 +54,7 @@ def make_parallel_data_provider(data_sources_source,
       tokens_feature_name="source_tokens",
       length_feature_name="source_len",
       append_token="SEQUENCE_END",
-      append_to_fixed_len=50,
+      #append_to_fixed_len=50,
       delimiter=source_delimiter)
 
   dataset_source = tf.contrib.slim.dataset.Dataset(

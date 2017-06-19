@@ -25,6 +25,10 @@ from collections import namedtuple
 
 import six
 import tensorflow as tf
+
+from tensorflow.contrib.slim.python.slim.nets.inception_v2 \
+  import inception_v2
+
 from tensorflow.python.util import nest  # pylint: disable=E0611
 from tensorflow.python.ops import math_ops
 from tensorflow.python.framework import constant_op
@@ -52,7 +56,7 @@ class DecoderOutput(
 
 
 @six.add_metaclass(abc.ABCMeta)
-class ConvDecoder(Decoder, GraphModule, Configurable):
+class InceptionDecoder(Decoder, GraphModule, Configurable):
   """Base class for RNN decoders.
 
   Args:
@@ -63,7 +67,7 @@ class ConvDecoder(Decoder, GraphModule, Configurable):
     name: A name for this module
   """
 
-  def __init__(self, params, mode, vocab_size, name="conv_deocder"):
+  def __init__(self, params, mode, vocab_size, name="inception_deocder"):
     GraphModule.__init__(self, name)
     Configurable.__init__(self, params, mode)
     self.vocab_size = vocab_size
@@ -140,25 +144,17 @@ class ConvDecoder(Decoder, GraphModule, Configurable):
                            lambda: tf.identity(pad_inputs),
                            name="maybe_trimming")
     
-    # Stacks FC layers.
-    print (inputs)
-    print (batch_size)
-    print (input_embeding_dim)
-    pad_inputs = tf.reshape(pad_inputs, [batch_size, max_input_seq_len, input_embeding_dim])
-    # FC layers in sequence to reduce embeding dim.
-    # pad_inputs = tf.Print(pad_inputs, [tf.shape(pad_inputs), pad_inputs], message="before fc:")
-    # Flat to 2d for FC layers
-    x = tf.contrib.layers.flatten(pad_inputs)
-    # x = tf.Print(x, [tf.shape(x), x], message="before fc:")
-    y = tf.contrib.layers.stack(x,
-                                tf.contrib.layers.fully_connected,
-                                [256, 128, 32],
-                                scope='Decoder/FC')
-    # y = tf.Print(y, [tf.shape(y), y], message="after fc");
-    logits = tf.contrib.layers.fully_connected(inputs=y, num_outputs=self.vocab_size,
-                                               activation_fn=None, scope='logits')
-    # logits = tf.Print(logits, [tf.shape(logits), logits], message="logits: ", summarize=18)
-    # calculate logics.
+    # Inception input must be rank 4: [batch, row, col, channel], we have to
+    # manually expand our rank3 input.
+    inception_input = tf.expand_dims(final_inputs, 3)
+    # Input size for inception must be 224*224
+    inception_input = tf.image.resize_images(
+        images=inception_input,
+        size=[224, 224],
+        method=tf.image.ResizeMethod.BILINEAR)
+
+    logits, _ = inception_v2(inputs=inception_input, num_classes=self.vocab_size,
+                             is_training=True)
     predictions = math_ops.cast(
         math_ops.argmax(logits, axis=-1), dtypes.int32)
     return DecoderOutput(
